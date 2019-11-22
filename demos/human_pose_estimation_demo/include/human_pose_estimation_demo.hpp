@@ -13,6 +13,9 @@ static const char help_message[] = "Print a usage message.";
 /// @brief Message for video argument
 static const char video_message[] = "Required. Path to a video. Default value is \"cam\" to work with camera.";
 
+/// @brief Message for video argument
+static const char corrent_frame[] = "current frame";
+
 /// @brief Message for model argument
 static const char human_pose_estimation_model_message[] = "Required. Path to the Human Pose Estimation model (.xml) file.";
 
@@ -32,6 +35,7 @@ static const char no_show_processed_video[] = "Optional. Do not show processed v
 static const char raw_output_message[] = "Optional. Output inference results as raw values.";
 
 /// @brief Defines flag for showing help message <br>
+
 DEFINE_bool(h, false, help_message);
 
 /// @brief Defines parameter for setting video file <br>
@@ -45,6 +49,9 @@ DEFINE_string(m, "", human_pose_estimation_model_message);
 /// @brief Defines parameter for the target device to infer on <br>
 /// It is an optional parameter
 DEFINE_string(d, "CPU", target_device_message);
+
+
+DEFINE_uint64(num, 0, corrent_frame);
 
 /// @brief Defines flag for per-layer performance report <br>
 /// It is an optional parameter
