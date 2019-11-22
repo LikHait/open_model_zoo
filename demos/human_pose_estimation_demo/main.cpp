@@ -99,11 +99,16 @@ int main(int argc, char* argv[]) {
                 continue;
             }
 
+            const std::string filename_r = "./hand/" + std::to_string(FLAGS_num) + "_r.png";
+            const std::string filename_l = "./hand/" + std::to_string(FLAGS_num) + "_l.png";
+
             // renderHumanPose(poses, image);
-            const std::string filename = "/home/pbochenk/projects/diplom/video-samples/hand2/image" + std::to_string(FLAGS_num) + ".png";
             float raw_width_box = 150;
             float raw_height_box = 150;
             if(!poses.empty()){
+
+
+
                 if(poses[0].keypoints[4].x - (raw_width_box / 2) > 0 && poses[0].keypoints[4].y - (raw_height_box / 2) > 0){
                     
                     auto keypoint_x_in_rect = poses[0].keypoints[4].x - raw_width_box / 2;
@@ -120,7 +125,26 @@ int main(int argc, char* argv[]) {
 
                     cv::Mat cropped_image;
                     ROI_for_crop.copyTo(cropped_image);
-                    cv::imwrite(filename, cropped_image);
+                    cv::imwrite(filename_r, cropped_image);
+                }
+
+                if(poses[0].keypoints[7].x - (raw_width_box / 2) > 0 && poses[0].keypoints[7].y - (raw_height_box / 2) > 0){
+                    
+                    auto keypoint_x_in_rect = poses[0].keypoints[7].x - raw_width_box / 2;
+                    auto keypoint_y_in_rect = poses[0].keypoints[7].y - raw_height_box / 2;
+
+                    auto correct_box_x = keypoint_x_in_rect + raw_width_box - image.cols;
+                    auto correct_box_y = keypoint_y_in_rect + raw_height_box - image.rows;
+
+                    auto acc_width_box = (keypoint_x_in_rect + raw_width_box > image.cols) ? (raw_width_box - correct_box_x) : raw_width_box;
+                    auto acc_height_box = (keypoint_y_in_rect + raw_height_box > image.rows) ? (raw_height_box - correct_box_y) : raw_height_box;
+
+                    cv::Mat ROI_for_crop(image, cv::Rect(keypoint_x_in_rect, keypoint_y_in_rect, 
+                    acc_width_box, acc_height_box));
+
+                    cv::Mat cropped_image;
+                    ROI_for_crop.copyTo(cropped_image);
+                    cv::imwrite(filename_l, cropped_image);
                 }
             }
             cv::Mat fpsPane(35, 155, CV_8UC3);
