@@ -9,6 +9,7 @@
 */
 
 #include <vector>
+#include <ctime>
 
 #include <inference_engine.hpp>
 
@@ -99,15 +100,14 @@ int main(int argc, char* argv[]) {
                 continue;
             }
 
-            const std::string filename_r = "./hand/" + std::to_string(FLAGS_num) + "_r.png";
-            const std::string filename_l = "./hand/" + std::to_string(FLAGS_num) + "_l.png";
+            std::time_t cur_time = std::time(nullptr);
+            const std::string filename_r = "./hand/" + std::to_string(FLAGS_num) + std::to_string(cur_time) + "_r.png";
+            const std::string filename_l = "./hand/" + std::to_string(FLAGS_num) + std::to_string(cur_time) + "_l.png";
 
             // renderHumanPose(poses, image);
             float raw_width_box = 150;
             float raw_height_box = 150;
             if(!poses.empty()){
-
-
 
                 if(poses[0].keypoints[4].x - (raw_width_box / 2) > 0 && poses[0].keypoints[4].y - (raw_height_box / 2) > 0){
                     
