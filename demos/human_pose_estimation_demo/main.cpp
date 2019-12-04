@@ -9,6 +9,7 @@
 */
 
 #include <vector>
+#include <ctime>
 
 #include <inference_engine.hpp>
 
@@ -99,28 +100,76 @@ int main(int argc, char* argv[]) {
                 continue;
             }
 
-            // renderHumanPose(poses, image);
-            const std::string filename = "/home/pbochenk/projects/diplom/video-samples/hand2/image" + std::to_string(FLAGS_num) + ".png";
-            float raw_width_box = 150;
-            float raw_height_box = 150;
-            if(!poses.empty()){
-                if(poses[0].keypoints[4].x - (raw_width_box / 2) > 0 && poses[0].keypoints[4].y - (raw_height_box / 2) > 0){
-                    
-                    auto keypoint_x_in_rect = poses[0].keypoints[4].x - raw_width_box / 2;
-                    auto keypoint_y_in_rect = poses[0].keypoints[4].y - raw_height_box / 2;
+            std::time_t cur_time = std::time(nullptr);
+            const std::string filename_r = "./hand/" + std::to_string(FLAGS_num) + std::to_string(cur_time) + "_r.png";
+            const std::string filename_l = "./hand/" + std::to_string(FLAGS_num) + std::to_string(cur_time) + "_l.png";
 
-                    auto correct_box_x = keypoint_x_in_rect + raw_width_box - image.cols;
-                    auto correct_box_y = keypoint_y_in_rect + raw_height_box - image.rows;
+            auto height = image.rows;
+            auto width = image.cols;
 
-                    auto acc_width_box = (keypoint_x_in_rect + raw_width_box > image.cols) ? (raw_width_box - correct_box_x) : raw_width_box;
-                    auto acc_height_box = (keypoint_y_in_rect + raw_height_box > image.rows) ? (raw_height_box - correct_box_y) : raw_height_box;
+            for (const auto &pose : poses) {
+                if (pose.keypoints[4].x >= 0 and pose.keypoints[7].x >= 0 and pose.keypoints[3].x >= 0 and
+                    pose.keypoints[6].x >= 0 and pose.keypoints[4].y >= 0 and pose.keypoints[7].y >= 0 and
+                    pose.keypoints[3].y >= 0 and pose.keypoints[6].y >= 0) {
+                    auto right_hand = pose.keypoints[4];
+                    auto left_hand = pose.keypoints[7];
+                    auto right_cubit = pose.keypoints[3];
+                    auto left_cubit = pose.keypoints[6];
 
-                    cv::Mat ROI_for_crop(image, cv::Rect(keypoint_x_in_rect, keypoint_y_in_rect, 
-                    acc_width_box, acc_height_box));
+                    float right_hand_bbox_size = cv::norm(right_hand - right_cubit);
+                    float left_hand_bbox_size = cv::norm(left_hand - left_cubit);
+
+                    float right_hand_bbox_x_min = right_hand.x - right_hand_bbox_size;
+                    float right_hand_bbox_y_min = right_hand.y - right_hand_bbox_size;
+
+                    float left_hand_bbox_x_min = left_hand.x - left_hand_bbox_size;
+                    float left_hand_bbox_y_min = left_hand.y - left_hand_bbox_size;
+
+                    left_hand_bbox_x_min = (left_hand_bbox_x_min >= 0) ? left_hand_bbox_x_min : 0;
+                    left_hand_bbox_y_min = (left_hand_bbox_y_min >= 0) ? left_hand_bbox_y_min : 0;
+
+                    float left_hand_bbox_x_max = (left_hand_bbox_x_min + left_hand_bbox_size * 2 <= width)
+                        ? left_hand_bbox_x_min + left_hand_bbox_size * 2
+                        : width;
+                    float left_hand_bbox_y_max = (left_hand_bbox_y_min + left_hand_bbox_size * 2 <= height)
+                        ? left_hand_bbox_y_min + left_hand_bbox_size * 2
+                        : height;
+
+                    cv::Mat ROI_for_crop(image, cv::Rect(static_cast<uint32_t>(left_hand_bbox_x_min),
+                        static_cast<uint32_t>(left_hand_bbox_y_min),
+                        static_cast<uint32_t>(left_hand_bbox_x_max - left_hand_bbox_x_min),
+                        static_cast<uint32_t>(left_hand_bbox_y_max - left_hand_bbox_y_min)));
 
                     cv::Mat cropped_image;
                     ROI_for_crop.copyTo(cropped_image);
-                    cv::imwrite(filename, cropped_image);
+                    cv::imwrite(filename_l, cropped_image);
+
+                    right_hand_bbox_x_min = (right_hand_bbox_x_min >= 0) ? right_hand_bbox_x_min : 0;
+                    right_hand_bbox_x_min = (right_hand_bbox_x_min <= width) ? right_hand_bbox_x_min : width;
+                    right_hand_bbox_y_min = (right_hand_bbox_y_min >= 0) ? right_hand_bbox_y_min : 0;
+                    right_hand_bbox_y_min = (right_hand_bbox_y_min <= height) ? right_hand_bbox_y_min : height;
+
+                    float right_hand_bbox_x_max = (right_hand_bbox_x_min + right_hand_bbox_size * 2 >= 0)
+                        ? right_hand_bbox_x_min + right_hand_bbox_size * 2
+                        : 0;
+                    right_hand_bbox_x_max = (right_hand_bbox_x_min + right_hand_bbox_size * 2 <= width)
+                        ? right_hand_bbox_x_min + right_hand_bbox_size * 2
+                        : width;
+                    float right_hand_bbox_y_max = (right_hand_bbox_y_min + right_hand_bbox_size * 2 >= 0)
+                        ? right_hand_bbox_y_min + right_hand_bbox_size * 2
+                        : 0;
+                    right_hand_bbox_y_max = (right_hand_bbox_y_min + right_hand_bbox_size * 2 <= height)
+                        ? right_hand_bbox_y_min + right_hand_bbox_size * 2
+                        : height;
+
+                    cv::Mat ROI_for_crop_r(image, cv::Rect(static_cast<uint32_t>(right_hand_bbox_x_min),
+                        static_cast<uint32_t>(right_hand_bbox_y_min),
+                        static_cast<uint32_t>(right_hand_bbox_x_max - right_hand_bbox_x_min),
+                        static_cast<uint32_t>(right_hand_bbox_y_max - right_hand_bbox_y_min)));
+
+                    cv::Mat cropped_image_r;
+                    ROI_for_crop_r.copyTo(cropped_image_r);
+                    cv::imwrite(filename_r, cropped_image_r);
                 }
             }
             cv::Mat fpsPane(35, 155, CV_8UC3);
